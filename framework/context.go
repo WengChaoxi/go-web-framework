@@ -83,13 +83,6 @@ func (c *Context) Value(key interface{}) interface{} {
 // 获取 URL 参数相关方法
 //
 
-func (c *Context) Query() map[string][]string {
-	if c.req != nil {
-		return map[string][]string(c.req.URL.Query())
-	}
-	return map[string][]string{}
-}
-
 func (c *Context) QueryInt(key string, default_ int) int {
 	data := c.Query()
 	if tmp, ok := data[key]; ok {
@@ -124,16 +117,16 @@ func (c *Context) QueryArray(key string, default_ []string) []string {
 	return default_
 }
 
-//
-// 获取 Form 数据相关方法 (post)
-//
-
-func (c *Context) PostForm() map[string][]string {
+func (c *Context) Query() map[string][]string {
 	if c.req != nil {
-		return map[string][]string(c.req.PostForm)
+		return map[string][]string(c.req.URL.Query())
 	}
 	return map[string][]string{}
 }
+
+//
+// 获取 Form 数据相关方法 (post)
+//
 
 func (c *Context) FormInt(key string, default_ int) int {
 	data := c.PostForm()
@@ -167,6 +160,13 @@ func (c *Context) FormArray(key string, default_ []string) []string {
 		return tmp
 	}
 	return default_
+}
+
+func (c *Context) PostForm() map[string][]string {
+	if c.req != nil {
+		return map[string][]string(c.req.PostForm)
+	}
+	return map[string][]string{}
 }
 
 //

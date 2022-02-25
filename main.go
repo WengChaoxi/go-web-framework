@@ -38,12 +38,13 @@ func TestHandler(c *framework.Context) error {
 		}()
 
 		// 业务逻辑
+		// time.Sleep(2 * time.Second)
 		id := c.QueryInt("id", 0)
 		if id == 1 {
 			c.Json(200, "hello world")
+		} else {
+			c.Json(200, "test")
 		}
-		time.Sleep(2 * time.Second)
-		c.Json(200, "test")
 
 		finish <- struct{}{}
 	}()
@@ -59,15 +60,27 @@ func TestHandler(c *framework.Context) error {
 		c.WriterMux().Lock()
 		defer c.WriterMux().Unlock()
 
-		c.Json(500, "time out")
+		c.Json(504, "time out")
 		c.SetHasTimeout()
 	}
 	return nil
 }
 
+func DefaultHandler(c *framework.Context) error {
+	c.Json(200, c.GetRequest().URL.Path)
+	return nil
+}
+
 func main() {
 	core := framework.NewCore()
-	core.Get("test", TestHandler)
+
+	core.Get("/test", TestHandler)
+	userRouter := core.Group("/user")
+	{
+		userRouter.Get("/login", DefaultHandler)
+		userRouter.Get("/logout", DefaultHandler)
+	}
+
 	server := &http.Server{
 		Handler: core,
 		Addr:    ":80",
