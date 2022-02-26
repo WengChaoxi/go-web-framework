@@ -1,22 +1,23 @@
 package framework
 
 import (
+	"log"
 	"net/http"
 	"strings"
 )
 
 // 框架核心数据结构
 type Core struct {
-	routers map[string]map[string]Handler
+	routers map[string]*Tree
 }
 
 // 初始化框架核心结构
 func NewCore() *Core {
-	routers := map[string]map[string]Handler{}
-	routers["GET"] = map[string]Handler{}
-	routers["POST"] = map[string]Handler{}
-	routers["PUT"] = map[string]Handler{}
-	routers["DELETE"] = map[string]Handler{}
+	routers := map[string]*Tree{}
+	routers["GET"] = NewTree()
+	routers["POST"] = NewTree()
+	routers["PUT"] = NewTree()
+	routers["DELETE"] = NewTree()
 	return &Core{
 		routers: routers,
 	}
@@ -24,22 +25,36 @@ func NewCore() *Core {
 
 // Get
 func (c *Core) Get(url string, handler Handler) {
-	c.routers["GET"][strings.ToUpper(url)] = handler
+	err := c.routers["GET"].AddRouter(url, handler)
+	if err != nil {
+		log.Fatal("add router error: ", err)
+	} else {
+		log.Println("add success")
+	}
 }
 
 // Post
 func (c *Core) Post(url string, handler Handler) {
-	c.routers["POST"][strings.ToUpper(url)] = handler
+	err := c.routers["POST"].AddRouter(url, handler)
+	if err != nil {
+		log.Fatal("add router error: ", err)
+	}
 }
 
 // Put
 func (c *Core) Put(url string, handler Handler) {
-	c.routers["PUT"][strings.ToUpper(url)] = handler
+	err := c.routers["PUT"].AddRouter(url, handler)
+	if err != nil {
+		log.Fatal("add router error: ", err)
+	}
 }
 
 // Delete
 func (c *Core) Delete(url string, handler Handler) {
-	c.routers["DELETE"][strings.ToUpper(url)] = handler
+	err := c.routers["DELETE"].AddRouter(url, handler)
+	if err != nil {
+		log.Fatal("add router error: ", err)
+	}
 }
 
 // Group
@@ -52,9 +67,7 @@ func (c *Core) FindRouterByRequest(request *http.Request) Handler {
 	uri := request.URL.Path
 	method := request.Method
 	if methodHandlers, ok := c.routers[strings.ToUpper(method)]; ok {
-		if handler, ok := methodHandlers[strings.ToUpper(uri)]; ok {
-			return handler
-		}
+		return methodHandlers.FindHandler(uri)
 	}
 	return nil
 }
