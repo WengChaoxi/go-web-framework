@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"goweb/framework/middleware"
 	"log"
 	"net/http"
 	"time"
@@ -74,9 +75,12 @@ func DefaultHandler(c *framework.Context) error {
 func main() {
 	core := framework.NewCore()
 
+	core.Use(middleware.Timeout(1 * time.Second))
 	core.Get("/test", TestHandler)
+
 	userRouter := core.Group("/user")
 	{
+		userRouter.Use(middleware.Cost())
 		userRouter.Get("/login", DefaultHandler)
 		userRouter.Get("/logout", DefaultHandler)
 	}

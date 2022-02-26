@@ -13,10 +13,12 @@ import (
 )
 
 type Context struct {
-	req     *http.Request
-	rw      http.ResponseWriter
-	ctx     context.Context
-	handler Handler
+	req *http.Request
+	rw  http.ResponseWriter
+	ctx context.Context
+
+	handlers []Handler // 调用链：中间件a -> 中间件b -> ... -> 业务逻辑
+	index    int       // 当前请求调用到调用链的位置, 默认 -1
 
 	hasTimeout bool        // 是否超时
 	writerMux  *sync.Mutex // 写锁
@@ -27,6 +29,7 @@ func NewContext(req *http.Request, rw http.ResponseWriter) *Context {
 		req:       req,
 		rw:        rw,
 		ctx:       req.Context(),
+		index:     -1,
 		writerMux: &sync.Mutex{},
 	}
 }
@@ -53,6 +56,23 @@ func (c *Context) SetHasTimeout() {
 
 func (c *Context) HasTimeout() bool {
 	return c.hasTimeout
+}
+
+// handlers 调用链
+func (c *Context) SetHandlers(handlers []Handler) {
+	c.handlers = handlers
+}
+
+// 调用调用链的下一个函数
+func (c *Context) Next() error {
+	c.index++
+	if c.index < len(c.handlers) {
+		err := c.handlers[c.index](c)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Context) BaseContext() context.Context {

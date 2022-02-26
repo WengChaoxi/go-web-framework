@@ -8,7 +8,8 @@ import (
 
 // 框架核心数据结构
 type Core struct {
-	routers map[string]*Tree
+	routers     map[string]*Tree
+	middlewares []Handler
 }
 
 // 初始化框架核心结构
@@ -23,35 +24,42 @@ func NewCore() *Core {
 	}
 }
 
+// 注册中间件
+func (c *Core) Use(middlewares ...Handler) {
+	c.middlewares = append(c.middlewares, middlewares...)
+}
+
 // Get
-func (c *Core) Get(url string, handler Handler) {
-	err := c.routers["GET"].AddRouter(url, handler)
+func (c *Core) Get(url string, handlers ...Handler) {
+	allHandlers := append(c.middlewares, handlers...)
+	err := c.routers["GET"].AddRouter(url, allHandlers)
 	if err != nil {
 		log.Fatal("add router error: ", err)
-	} else {
-		log.Println("add success")
 	}
 }
 
 // Post
-func (c *Core) Post(url string, handler Handler) {
-	err := c.routers["POST"].AddRouter(url, handler)
+func (c *Core) Post(url string, handlers ...Handler) {
+	allHandlers := append(c.middlewares, handlers...)
+	err := c.routers["POST"].AddRouter(url, allHandlers)
 	if err != nil {
 		log.Fatal("add router error: ", err)
 	}
 }
 
 // Put
-func (c *Core) Put(url string, handler Handler) {
-	err := c.routers["PUT"].AddRouter(url, handler)
+func (c *Core) Put(url string, handlers ...Handler) {
+	allHandlers := append(c.middlewares, handlers...)
+	err := c.routers["PUT"].AddRouter(url, allHandlers)
 	if err != nil {
 		log.Fatal("add router error: ", err)
 	}
 }
 
 // Delete
-func (c *Core) Delete(url string, handler Handler) {
-	err := c.routers["DELETE"].AddRouter(url, handler)
+func (c *Core) Delete(url string, handlers ...Handler) {
+	allHandlers := append(c.middlewares, handlers...)
+	err := c.routers["DELETE"].AddRouter(url, allHandlers)
 	if err != nil {
 		log.Fatal("add router error: ", err)
 	}
@@ -62,8 +70,8 @@ func (c *Core) Group(prefix string) IGroup {
 	return NewGroup(c, prefix)
 }
 
-// 根据请求中的信息获取处理函数句柄
-func (c *Core) FindRouterByRequest(request *http.Request) Handler {
+// 根据请求中的信息获取路由对应处理函数句柄
+func (c *Core) FindHandlersByRequest(request *http.Request) []Handler {
 	uri := request.URL.Path
 	method := request.Method
 	if methodHandlers, ok := c.routers[strings.ToUpper(method)]; ok {
@@ -76,12 +84,13 @@ func (c *Core) FindRouterByRequest(request *http.Request) Handler {
 func (c *Core) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx := NewContext(req, rw)
 
-	router := c.FindRouterByRequest(req)
-	if router == nil {
+	handlers := c.FindHandlersByRequest(req)
+	if handlers == nil {
 		ctx.Json(404, "not found")
 		return
 	}
-	if err := router(ctx); err != nil {
+	ctx.SetHandlers(handlers)
+	if err := ctx.Next(); err != nil {
 		ctx.Json(500, "inner error")
 		return
 	}

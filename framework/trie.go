@@ -11,10 +11,10 @@ type Tree struct {
 }
 
 type node struct {
-	isLast  bool    // 代表当前节点是否可以成为最终的路由规则
-	segment string  // uri 中的字符串，路由的片段
-	handler Handler // 路由处理函数句柄
-	childs  []*node // 所属子节点
+	isLast   bool      // 代表当前节点是否可以成为最终的路由规则
+	segment  string    // uri 中的字符串，路由的片段
+	handlers []Handler // 中间件、路由处理函数句柄
+	childs   []*node   // 所属子节点
 }
 
 func newNode() *node {
@@ -91,7 +91,7 @@ func (n *node) matchNode(uri string) *node {
 }
 
 // 添加路由节点
-func (t *Tree) AddRouter(uri string, handler Handler) error {
+func (t *Tree) AddRouter(uri string, handlers []Handler) error {
 	n := t.root
 	if n.matchNode(uri) != nil {
 		return errors.New("route exist: " + uri)
@@ -121,7 +121,7 @@ func (t *Tree) AddRouter(uri string, handler Handler) error {
 			node.segment = segment
 			if isLast {
 				node.isLast = true
-				node.handler = handler
+				node.handlers = handlers
 			}
 			n.childs = append(n.childs, node)
 			tmp = node
@@ -132,10 +132,10 @@ func (t *Tree) AddRouter(uri string, handler Handler) error {
 }
 
 // 匹配 uri
-func (t *Tree) FindHandler(uri string) Handler {
+func (t *Tree) FindHandler(uri string) []Handler {
 	matchNode := t.root.matchNode(uri)
 	if matchNode != nil {
-		return matchNode.handler
+		return matchNode.handlers
 	}
 	return nil
 }
