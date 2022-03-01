@@ -2,71 +2,29 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"goweb/framework/middleware"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"goweb/framework"
+	"goweb/framework/middleware"
 )
 
-// handler func
+// test
 func TestHandler(c *framework.Context) error {
-	// id := c.QueryInt("id", 0)
-	// if id == 1 {
-	// 	c.Json(200, "hello world")
-	// }
-	// c.Json(200, "test")
-	// return nil
-
-	finish := make(chan struct{}, 1)
-	panicChan := make(chan interface{}, 1)
-
-	// 设置超时
-	durationCtx, cancel := context.WithTimeout(c.BaseContext(), time.Duration(1*time.Second))
-	defer cancel()
-
-	go func() {
-		// 根据 golang 的设计，每个 Goroutine 都是独立存在的
-		// 父 Goroutine 一旦使用 go 关键字开启一个子 Goroutine
-		// 父子是平等的，将不能相互干扰，都必须自己处理自己的异常
-		// 任意一个 Goroutine 的 panic 都会导致整个进程崩溃
-		defer func() {
-			if p := recover(); p != nil {
-				panicChan <- p
-			}
-		}()
-
-		// 业务逻辑
-		// time.Sleep(2 * time.Second)
-		id := c.QueryInt("id", 0)
-		if id == 1 {
-			c.Json(200, "hello world")
-		} else {
-			c.Json(200, "test")
-		}
-
-		finish <- struct{}{}
-	}()
-
-	select {
-	case p := <-panicChan:
-		c.WriterMux().Lock()
-		defer c.WriterMux().Unlock()
-		log.Println(p)
-	case <-finish:
-		fmt.Println("finish")
-	case <-durationCtx.Done():
-		c.WriterMux().Lock()
-		defer c.WriterMux().Unlock()
-
-		c.Json(504, "time out")
-		c.SetHasTimeout()
+	id := c.QueryInt("id", 0)
+	if id == 1 {
+		c.Json(200, "hello world")
+	} else {
+		c.Json(200, "test")
 	}
 	return nil
 }
 
+// default
 func DefaultHandler(c *framework.Context) error {
 	c.Json(200, c.GetRequest().URL.Path)
 	return nil
@@ -75,12 +33,16 @@ func DefaultHandler(c *framework.Context) error {
 func main() {
 	core := framework.NewCore()
 
+	// 超时中间件
 	core.Use(middleware.Timeout(1 * time.Second))
+
+	// 注册 /test 路由
 	core.Get("/test", TestHandler)
 
+	// 使用 group 分组，路由前缀
 	userRouter := core.Group("/user")
 	{
-		userRouter.Use(middleware.Cost())
+		userRouter.Use(middleware.Cost()) // 为当前分组使用计算耗时中间件
 		userRouter.Get("/login", DefaultHandler)
 		userRouter.Get("/logout", DefaultHandler)
 	}
@@ -89,5 +51,32 @@ func main() {
 		Handler: core,
 		Addr:    ":80",
 	}
-	server.ListenAndServe()
+
+	// 启动 http 服务
+	go func() {
+		server.ListenAndServe()
+	}()
+
+	quit := make(chan os.Signal)
+
+	// ctrl+c  : SIGINT
+	// ctrl+\  : SIGQUIT
+	// kill    : SIGTERM
+	// kill -9 : SIGKILL // 不能被捕获
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+
+	<-quit
+
+	print("shutdown...")
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	<-ticker.C
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(timeoutCtx); err != nil {
+		log.Fatal("server shutdown: ", err)
+	}
+	println("ok")
 }
