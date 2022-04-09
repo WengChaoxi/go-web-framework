@@ -68,7 +68,7 @@ func main() {
 	<-quit
 
 	print("shutdown...")
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 	<-ticker.C
 

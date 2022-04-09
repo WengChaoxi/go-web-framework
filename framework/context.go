@@ -17,8 +17,8 @@ type Context struct {
 	rw  http.ResponseWriter
 	ctx context.Context
 
-	handlers []Handler // 调用链：中间件a -> 中间件b -> ... -> 业务逻辑
-	index    int       // 当前请求调用到调用链的位置, 默认 -1
+	handlers []HandlerFunc // 调用链：中间件a -> 中间件b -> ... -> 业务逻辑
+	index    int           // 当前请求调用到调用链的位置, 默认 -1
 
 	hasTimeout bool        // 是否超时
 	writerMux  *sync.Mutex // 写锁
@@ -59,7 +59,7 @@ func (c *Context) HasTimeout() bool {
 }
 
 // handlers 调用链
-func (c *Context) SetHandlers(handlers []Handler) {
+func (c *Context) SetHandlers(handlers []HandlerFunc) {
 	c.handlers = handlers
 }
 

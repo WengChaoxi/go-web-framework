@@ -9,7 +9,7 @@ import (
 	"goweb/framework"
 )
 
-func Timeout(duration time.Duration) framework.Handler {
+func Timeout(duration time.Duration) framework.HandlerFunc {
 	return func(c *framework.Context) error {
 		finish := make(chan struct{}, 1)
 		panicChan := make(chan interface{}, 1)

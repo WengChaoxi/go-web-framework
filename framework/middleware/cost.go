@@ -8,7 +8,7 @@ import (
 )
 
 // 计算 api 耗时
-func Cost() framework.Handler {
+func Cost() framework.HandlerFunc {
 	return func(c *framework.Context) error {
 		start := time.Now()
 		c.Next()
