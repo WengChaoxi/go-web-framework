@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"goweb/framework"
+	"github.com/WengChaoxi/go-web-framework/framework"
 )
 
 // 计算 api 耗时

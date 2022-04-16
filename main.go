@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"goweb/framework"
-	"goweb/framework/middleware"
+	"github.com/WengChaoxi/go-web-framework/framework"
+	"github.com/WengChaoxi/go-web-framework/framework/middleware"
 )
 
 // test
