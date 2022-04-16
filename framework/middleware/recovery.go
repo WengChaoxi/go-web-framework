@@ -1,6 +1,6 @@
 package middleware
 
-import "goweb/framework"
+import "github.com/WengChaoxi/go-web-framework/framework"
 
 // recovery 机制，将协程中的异常捕获
 func Recovery() framework.Handler {

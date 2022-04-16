@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"goweb/framework"
+	"github.com/WengChaoxi/go-web-framework/framework"
 )
 
 func Timeout(duration time.Duration) framework.Handler {
