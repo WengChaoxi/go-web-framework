@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -42,12 +41,12 @@ func Timeout(duration time.Duration) framework.HandlerFunc {
 			log.Println(p)
 			c.ResponseWriter().WriteHeader(500)
 		case <-finish:
-			fmt.Println("finish")
+			// fmt.Println("finish")
 		case <-durationCtx.Done():
 			c.WriterMux().Lock()
 			defer c.WriterMux().Unlock()
 
-			c.Json(504, "time out")
+			c.Json(504, "timeout")
 			c.SetHasTimeout()
 		}
 		return nil

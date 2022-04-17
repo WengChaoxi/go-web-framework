@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -67,7 +68,7 @@ func main() {
 
 	<-quit
 
-	print("shutdown...")
+	fmt.Println("shutdown...")
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	<-ticker.C
@@ -78,5 +79,4 @@ func main() {
 	if err := server.Shutdown(timeoutCtx); err != nil {
 		log.Fatal("server shutdown: ", err)
 	}
-	println("ok")
 }
