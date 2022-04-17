@@ -1,3 +1,3 @@
 package framework
 
-type Handler func(c *Context) error
+type HandlerFunc func(c *Context) error

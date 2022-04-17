@@ -9,7 +9,7 @@ import (
 	"github.com/WengChaoxi/go-web-framework/framework"
 )
 
-func Timeout(duration time.Duration) framework.Handler {
+func Timeout(duration time.Duration) framework.HandlerFunc {
 	return func(c *framework.Context) error {
 		finish := make(chan struct{}, 1)
 		panicChan := make(chan interface{}, 1)
@@ -40,7 +40,7 @@ func Timeout(duration time.Duration) framework.Handler {
 			c.WriterMux().Lock()
 			defer c.WriterMux().Unlock()
 			log.Println(p)
-			c.GetResponse().WriteHeader(500)
+			c.ResponseWriter().WriteHeader(500)
 		case <-finish:
 			fmt.Println("finish")
 		case <-durationCtx.Done():

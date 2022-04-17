@@ -9,7 +9,7 @@ import (
 // 框架核心数据结构
 type Core struct {
 	routers     map[string]*Tree
-	middlewares []Handler
+	middlewares []HandlerFunc
 }
 
 // 初始化框架核心结构
@@ -25,12 +25,12 @@ func NewCore() *Core {
 }
 
 // 注册中间件
-func (c *Core) Use(middlewares ...Handler) {
+func (c *Core) Use(middlewares ...HandlerFunc) {
 	c.middlewares = append(c.middlewares, middlewares...)
 }
 
 // Get
-func (c *Core) Get(url string, handlers ...Handler) {
+func (c *Core) Get(url string, handlers ...HandlerFunc) {
 	allHandlers := append(c.middlewares, handlers...)
 	err := c.routers["GET"].AddRouter(url, allHandlers)
 	if err != nil {
@@ -39,7 +39,7 @@ func (c *Core) Get(url string, handlers ...Handler) {
 }
 
 // Post
-func (c *Core) Post(url string, handlers ...Handler) {
+func (c *Core) Post(url string, handlers ...HandlerFunc) {
 	allHandlers := append(c.middlewares, handlers...)
 	err := c.routers["POST"].AddRouter(url, allHandlers)
 	if err != nil {
@@ -48,7 +48,7 @@ func (c *Core) Post(url string, handlers ...Handler) {
 }
 
 // Put
-func (c *Core) Put(url string, handlers ...Handler) {
+func (c *Core) Put(url string, handlers ...HandlerFunc) {
 	allHandlers := append(c.middlewares, handlers...)
 	err := c.routers["PUT"].AddRouter(url, allHandlers)
 	if err != nil {
@@ -57,7 +57,7 @@ func (c *Core) Put(url string, handlers ...Handler) {
 }
 
 // Delete
-func (c *Core) Delete(url string, handlers ...Handler) {
+func (c *Core) Delete(url string, handlers ...HandlerFunc) {
 	allHandlers := append(c.middlewares, handlers...)
 	err := c.routers["DELETE"].AddRouter(url, allHandlers)
 	if err != nil {
@@ -71,7 +71,7 @@ func (c *Core) Group(prefix string) IGroup {
 }
 
 // 根据请求中的信息获取路由对应处理函数句柄
-func (c *Core) FindHandlersByRequest(request *http.Request) []Handler {
+func (c *Core) FindHandlersByRequest(request *http.Request) []HandlerFunc {
 	uri := request.URL.Path
 	method := request.Method
 	if methodHandlers, ok := c.routers[strings.ToUpper(method)]; ok {
@@ -90,8 +90,10 @@ func (c *Core) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ctx.SetHandlers(handlers)
-	if err := ctx.Next(); err != nil {
-		ctx.Json(500, "inner error")
-		return
-	}
+
+	// if err := ctx.Next(); err != nil {
+	// 	ctx.Json(500, "inner error")
+	// 	return
+	// }
+	ctx.Next()
 }

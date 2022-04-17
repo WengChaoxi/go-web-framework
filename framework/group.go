@@ -1,14 +1,14 @@
 package framework
 
 type IGroup interface {
-	Get(string, ...Handler)
-	Post(string, ...Handler)
-	Put(string, ...Handler)
-	Delete(string, ...Handler)
+	Get(string, ...HandlerFunc)
+	Post(string, ...HandlerFunc)
+	Put(string, ...HandlerFunc)
+	Delete(string, ...HandlerFunc)
 
 	Group(string) IGroup // 用于 Group 嵌套
 
-	Use(middlewares ...Handler)
+	Use(middlewares ...HandlerFunc)
 }
 
 type Group struct {
@@ -16,7 +16,7 @@ type Group struct {
 	parent *Group // 指向上一个 Group，用于 Group 嵌套
 	prefix string // 当前 Group 前缀
 
-	middlewares []Handler
+	middlewares []HandlerFunc
 }
 
 // 初始化 Group
@@ -25,36 +25,36 @@ func NewGroup(core *Core, prefix string) *Group {
 		core:        core,
 		parent:      nil,
 		prefix:      prefix,
-		middlewares: []Handler{},
+		middlewares: []HandlerFunc{},
 	}
 }
 
 // Get
-func (g *Group) Get(uri string, handlers ...Handler) {
+func (g *Group) Get(uri string, handlers ...HandlerFunc) {
 	uri = g.getAbsolutePrefix() + uri // 组合前缀和目标地址
 	allHandlers := append(g.getMiddlewares(), handlers...)
 	g.core.Get(uri, allHandlers...)
 }
 
 // Post
-func (g *Group) Post(uri string, handlers ...Handler) {
+func (g *Group) Post(uri string, handlers ...HandlerFunc) {
 	uri = g.getAbsolutePrefix() + uri
 	allHandlers := append(g.getMiddlewares(), handlers...)
-	g.core.Get(uri, allHandlers...)
+	g.core.Post(uri, allHandlers...)
 }
 
 // Put
-func (g *Group) Put(uri string, handlers ...Handler) {
+func (g *Group) Put(uri string, handlers ...HandlerFunc) {
 	uri = g.getAbsolutePrefix() + uri
 	allHandlers := append(g.getMiddlewares(), handlers...)
-	g.core.Get(uri, allHandlers...)
+	g.core.Put(uri, allHandlers...)
 }
 
 // Delete
-func (g *Group) Delete(uri string, handlers ...Handler) {
+func (g *Group) Delete(uri string, handlers ...HandlerFunc) {
 	uri = g.getAbsolutePrefix() + uri
 	allHandlers := append(g.getMiddlewares(), handlers...)
-	g.core.Get(uri, allHandlers...)
+	g.core.Delete(uri, allHandlers...)
 }
 
 // 获取当前 Group 绝对路径
@@ -66,7 +66,7 @@ func (g *Group) getAbsolutePrefix() string {
 }
 
 // 获取当前 Group 的 middleware
-func (g *Group) getMiddlewares() []Handler {
+func (g *Group) getMiddlewares() []HandlerFunc {
 	if g.parent == nil {
 		return g.middlewares
 	}
@@ -80,6 +80,6 @@ func (g *Group) Group(uri string) IGroup {
 }
 
 // 注册中间件
-func (g *Group) Use(middlewares ...Handler) {
+func (g *Group) Use(middlewares ...HandlerFunc) {
 	g.middlewares = append(g.middlewares, middlewares...)
 }

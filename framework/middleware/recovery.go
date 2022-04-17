@@ -3,7 +3,7 @@ package middleware
 import "github.com/WengChaoxi/go-web-framework/framework"
 
 // recovery 机制，将协程中的异常捕获
-func Recovery() framework.Handler {
+func Recovery() framework.HandlerFunc {
 	return func(c *framework.Context) error {
 		// 捕获 c.Next() 出现的 panic
 		defer func() {
