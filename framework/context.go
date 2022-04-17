@@ -33,7 +33,6 @@ func NewContext(req *http.Request, rw http.ResponseWriter) *Context {
 		ctx:     req.Context(),
 		index:   -1,
 		mu:      &sync.RWMutex{},
-		keys:    make(map[string]interface{}),
 	}
 }
 
@@ -59,6 +58,29 @@ func (c *Context) SetHasTimeout() {
 
 func (c *Context) HasTimeout() bool {
 	return c.hasTimeout
+}
+
+func (c *Context) Set(key string, value interface{}) {
+	c.mu.Lock()
+	if c.keys == nil {
+		c.keys = make(map[string]interface{})
+	}
+	c.keys[key] = value
+	c.mu.Unlock()
+}
+
+func (c *Context) Get(key string) (value interface{}, exists bool) {
+	c.mu.RLock()
+	value, exists = c.keys[key]
+	c.mu.Unlock()
+	return
+}
+
+func (c *Context) GetString(key string) (s string) {
+	if value, ok := c.Get(key); ok && value != nil {
+		s, _ = value.(string)
+	}
+	return
 }
 
 // 设置 handlers 调用链
