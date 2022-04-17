@@ -13,24 +13,27 @@ import (
 )
 
 type Context struct {
-	req *http.Request
-	rw  http.ResponseWriter
-	ctx context.Context
+	request *http.Request
+	writer  http.ResponseWriter
+	ctx     context.Context
 
 	handlers []HandlerFunc // 调用链：中间件a -> 中间件b -> ... -> 业务逻辑
 	index    int           // 当前请求调用到调用链的位置, 默认 -1
 
-	hasTimeout bool        // 是否超时
-	writerMux  *sync.Mutex // 写锁
+	mu   *sync.RWMutex
+	keys map[string]interface{}
+
+	hasTimeout bool // 是否超时
 }
 
 func NewContext(req *http.Request, rw http.ResponseWriter) *Context {
 	return &Context{
-		req:       req,
-		rw:        rw,
-		ctx:       req.Context(),
-		index:     -1,
-		writerMux: &sync.Mutex{},
+		request: req,
+		writer:  rw,
+		ctx:     req.Context(),
+		index:   -1,
+		mu:      &sync.RWMutex{},
+		keys:    make(map[string]interface{}),
 	}
 }
 
@@ -38,16 +41,16 @@ func NewContext(req *http.Request, rw http.ResponseWriter) *Context {
 // 基本函数功能
 //
 
-func (c *Context) WriterMux() *sync.Mutex {
-	return c.writerMux
+func (c *Context) WriterMux() *sync.RWMutex {
+	return c.mu
 }
 
-func (c *Context) GetRequest() *http.Request {
-	return c.req
+func (c *Context) Request() *http.Request {
+	return c.request
 }
 
-func (c *Context) GetResponse() http.ResponseWriter {
-	return c.rw
+func (c *Context) ResponseWriter() http.ResponseWriter {
+	return c.writer
 }
 
 func (c *Context) SetHasTimeout() {
@@ -76,7 +79,7 @@ func (c *Context) Next() error {
 }
 
 func (c *Context) BaseContext() context.Context {
-	return c.req.Context()
+	return c.request.Context()
 }
 
 //
@@ -138,8 +141,8 @@ func (c *Context) QueryArray(key string, default_ []string) []string {
 }
 
 func (c *Context) Query() map[string][]string {
-	if c.req != nil {
-		return map[string][]string(c.req.URL.Query())
+	if c.request != nil {
+		return map[string][]string(c.request.URL.Query())
 	}
 	return map[string][]string{}
 }
@@ -183,8 +186,8 @@ func (c *Context) FormArray(key string, default_ []string) []string {
 }
 
 func (c *Context) PostForm() map[string][]string {
-	if c.req != nil {
-		return map[string][]string(c.req.PostForm)
+	if c.request != nil {
+		return map[string][]string(c.request.PostForm)
 	}
 	return map[string][]string{}
 }
@@ -194,12 +197,12 @@ func (c *Context) PostForm() map[string][]string {
 //
 
 func (c *Context) BindJson(object interface{}) error {
-	if c.req != nil {
-		body, err := ioutil.ReadAll(c.req.Body)
+	if c.request != nil {
+		body, err := ioutil.ReadAll(c.request.Body)
 		if err != nil {
 			return err
 		}
-		c.req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		c.request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 		err = json.Unmarshal(body, object)
 		if err != nil {
@@ -219,14 +222,14 @@ func (c *Context) Json(status int, object interface{}) error {
 	if c.HasTimeout() {
 		return nil
 	}
-	c.rw.Header().Set("Content-Type", "application/json")
-	c.rw.WriteHeader(status)
+	c.writer.Header().Set("Content-Type", "application/json")
+	c.writer.WriteHeader(status)
 	bytes_, err := json.Marshal(object)
 	if err != nil {
-		c.rw.WriteHeader(500)
+		c.writer.WriteHeader(500)
 		return err
 	}
-	c.rw.Write(bytes_)
+	c.writer.Write(bytes_)
 	return nil
 }
 

@@ -40,7 +40,7 @@ func Timeout(duration time.Duration) framework.HandlerFunc {
 			c.WriterMux().Lock()
 			defer c.WriterMux().Unlock()
 			log.Println(p)
-			c.GetResponse().WriteHeader(500)
+			c.ResponseWriter().WriteHeader(500)
 		case <-finish:
 			fmt.Println("finish")
 		case <-durationCtx.Done():

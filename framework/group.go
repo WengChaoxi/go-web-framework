@@ -40,21 +40,21 @@ func (g *Group) Get(uri string, handlers ...HandlerFunc) {
 func (g *Group) Post(uri string, handlers ...HandlerFunc) {
 	uri = g.getAbsolutePrefix() + uri
 	allHandlers := append(g.getMiddlewares(), handlers...)
-	g.core.Get(uri, allHandlers...)
+	g.core.Post(uri, allHandlers...)
 }
 
 // Put
 func (g *Group) Put(uri string, handlers ...HandlerFunc) {
 	uri = g.getAbsolutePrefix() + uri
 	allHandlers := append(g.getMiddlewares(), handlers...)
-	g.core.Get(uri, allHandlers...)
+	g.core.Put(uri, allHandlers...)
 }
 
 // Delete
 func (g *Group) Delete(uri string, handlers ...HandlerFunc) {
 	uri = g.getAbsolutePrefix() + uri
 	allHandlers := append(g.getMiddlewares(), handlers...)
-	g.core.Get(uri, allHandlers...)
+	g.core.Delete(uri, allHandlers...)
 }
 
 // 获取当前 Group 绝对路径
