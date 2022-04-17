@@ -26,7 +26,7 @@ func TestHandler(c *framework.Context) error {
 
 // default
 func DefaultHandler(c *framework.Context) error {
-	c.Json(200, c.GetRequest().URL.Path)
+	c.Json(200, c.Request().URL.Path)
 	return nil
 }
 
