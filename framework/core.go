@@ -77,8 +77,5 @@ func (c *Core) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ctx.SetHandlers(handlers)
-	if err := ctx.Next(); err != nil {
-		ctx.Json(500, "inner error")
-		return
-	}
+	ctx.Next()
 }
