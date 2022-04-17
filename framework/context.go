@@ -5,10 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"sync"
+	"text/template"
 	"time"
 )
 
@@ -255,12 +258,38 @@ func (c *Context) Json(status int, object interface{}) error {
 	return nil
 }
 
-func (c *Context) HTML(status int, object interface{}, template string) error {
-	// TODO
+func (c *Context) HTML(template_ string, object interface{}) error {
+	t, err := template.New("output").Parse(template_)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return err
+	}
+	if err := t.Execute(c.writer, object); err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return err
+	}
+	c.writer.Header().Set("Content-Type", "application/html")
 	return nil
 }
 
-func (c *Context) Text(status int, object string) error {
-	// TODO
+func (c *Context) HTMLFromFile(filename string, object interface{}) error {
+	_, fn := filepath.Split(filename)
+	t, err := template.New(fn).ParseFiles(filename)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return err
+	}
+	if err := t.Execute(c.writer, object); err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return err
+	}
+	c.writer.Header().Set("Content-Type", "application/html")
+	return nil
+}
+
+func (c *Context) Text(text string) error {
+	c.writer.Header().Set("Content-Type", "text/plain")
+	c.writer.WriteHeader(200)
+	c.writer.Write([]byte(text))
 	return nil
 }

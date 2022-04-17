@@ -19,8 +19,10 @@ func TestHandler(c *framework.Context) error {
 	id := c.QueryInt("id", 0)
 	if id == 1 {
 		c.Json(200, "hello world")
-	} else {
-		c.Json(200, "test")
+	} else if id == 2 {
+		c.Text("test")
+	} else if id == 3 {
+		c.HTML("<h1>你好世界</h1>", nil)
 	}
 	return nil
 }
@@ -58,7 +60,7 @@ func main() {
 		server.ListenAndServe()
 	}()
 
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 
 	// ctrl+c  : SIGINT
 	// ctrl+\  : SIGQUIT
@@ -69,7 +71,7 @@ func main() {
 	<-quit
 
 	fmt.Println("shutdown...")
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	<-ticker.C
 
